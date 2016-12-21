@@ -3,13 +3,13 @@ irc = require "irc"
 
 local M = {
 	-- Callback on connect
-	function on_connect()
+	on_connect = function ()
 		print("Joining channel #lost_rd...")
 		irc.join("#lost_rd")
 	end,
 	
 	-- Callback on bot join
-	function on_me_join(chan)
+	on_me_join = function (chan)
 		print("Join to " .. chan .. " complete.")
 		print(chan .. ": Channel type: " .. chan.chanmode)
 		if chan.topic.text and chan.topic.text ~= "" then
@@ -24,7 +24,7 @@ local M = {
 	end,
 	
 	-- Callback on user join
-	function on_join(chan, user)
+	on_join = function (chan, user)
 		print("I saw a join to " .. chan)
 		if tostring(user) ~= "lost_rd" then
 			irc.say(tostring(chan), "Hi, " .. user)
@@ -34,74 +34,74 @@ local M = {
 
 	-- Callback on user part
 	-- Not sure if useful for Twitch chat
-	function on_part(chan, user, part_msg)
+	on_part = function (chan, user, part_msg)
 		print("I saw a part from " .. chan.name .. " saying " .. part_msg)
 		print_state()
 	end,
 
 	-- Callback on nick change
 	-- Not useful for Twitch chat
-	function on_nick_change(new_nick, old_nick)
+	on_nick_change = function (new_nick, old_nick)
 		print("I saw a nick change: "  ..  old_nick .. " -> " .. new_nick)
 		print_state()
 	end,
 
 	-- Callback on kick
 	-- Not sure if useful for Twitch chat
-	function on_kick(chan, user)
+	on_kick = function (chan, user)
 		print("I saw a kick in " .. chan)
 		print_state()
 	end,
 
 	-- Callback on user quit
 	-- Not sure if useful for Twitch chat
-	function on_quit(chan, user)
+	on_quit = function (chan, user)
 		print("I saw a quit from " .. chan)
 		print_state()
 	end,
 
 	-- Callback on act (/me)?
-	function on_channel_act(chan, from, msg)
+	on_channel_act = function (chan, from, msg)
 		--irc.act(chan.name, "jumps on " .. from)
 	end,
 
 	-- Callback on private act
 	-- Doubt useful
-	function on_private_act(from, msg)
+	on_private_act = function (from, msg)
 		irc.act(from, "jumps on you")
 	end,
 
 	-- Callback on op
 	-- Might be invoked when a user is modded
-	function on_op(chan, from, nick)
+	on_op = function (chan, from, nick)
 		print(nick .. " was opped in " .. chan .. " by " .. from)
 		print_state()
 	end,
 
 	-- Callback on deop
 	-- Might be invoked when mod is unmodded
-	function on_deop(chan, from, nick)
+	on_deop = function (chan, from, nick)
 		print(nick .. " was deopped in " .. chan .. " by " .. from)
 		print_state()
 	end,
 
 	-- Callback on voice
 	-- Might be invoked when a user is modded
-	function on_voice(chan, from, nick)
+	on_voice = function (chan, from, nick)
 		print(nick .. " was voiced in " .. chan .. " by " .. from)
 		print_state()
 	end,
 
 	-- Callback on devoice
 	-- Might be invoked when mod is unmodded
-	function on_devoice(chan, from, nick)
+	on_devoice = function (chan, from, nick)
 		print(nick .. " was devoiced in " .. chan .. " by " .. from)
 		print_state()
 	end,
 
 	-- Callback on dcc send
 	-- Invoked when the bot sends a message?
-	function on_dcc_send()
+	on_dcc_send = function ()
 		return true
 	end
 }
