@@ -11,6 +11,10 @@ local dcc = require "irc.dcc"
 local callbacks = require "callbacks"
 local utils = require "utils"
 
+broadcaster_name = "lost_rd"
+broadcaster_channel = "#"..broadcaster_name
+bot_name = "lost_r2d2"
+
 -- Debug flag
 irc.DEBUG = true
 
@@ -19,16 +23,6 @@ local ip_prog = io.popen("get_ip")
 local ip = ip_prog:read()
 ip_prog:close()
 irc.set_ip(ip)
-
--- Print channel members of all connected channels
-local function print_state()
-	for chan in irc.channels() do
-		print(chan..": Channel ops: "..table.concat(chan:ops(), " "))
-		print(chan..": Channel voices: "..table.concat(chan:voices(), " "))
-		print(chan..": Channel normal users: "..table.concat(chan:users(), " "))
-		print(chan..": All channel members: "..table.concat(chan:members(), " "))
-	end
-end
 
 irc.register_callback("connect", callbacks.on_connect)
 irc.register_callback("me_join", callbacks.on_me_join)
@@ -99,7 +93,7 @@ end
 -- Callback for every message typed in the channel
 -- TODO make this modular
 local function on_channel_msg(chan, from, msg)
-	if from == "lost_rd" then
+	if from == broadcaster_name then
 		if msg == "shoo l2d2" then
 			irc.part(chan.name)
 			return
@@ -222,7 +216,7 @@ local function on_channel_msg(chan, from, msg)
 			end
 		end
 		if cmd == "maxmeme" then
-			if from == "siberianpns" or from == "lost_rd" then
+			if from == broadcaster_name then
 				irc.say(chan.name, "MAXIMUM")
 				irc.say(chan.name, "E")
 				irc.say(chan.name, "M")
@@ -236,7 +230,7 @@ irc.register_callback("channel_msg", on_channel_msg)
 -- Callback on whisper (/w)
 -- Useful for administration of the bot that the users shouldn't see
 local function on_private_msg(from, msg)
-	if from == "lost_rd" then
+	if from == broadcaster_name then
 		if msg == "leave" then
 			irc.quit("gone")
 			return
@@ -291,9 +285,9 @@ end
 
 -- Add admins and mods to the groups
 -- This will be replaced with database calls
-admins = Group:new("admins", {"lost_rd"})
+admins = Group:new("admins", {broadcaster_name})
 admins:printMembers()
-mods = Group:new("mods", {"lost_rd", "lost_r2d2"})
+mods = Group:new("mods", {broadcaster_name, bot_name})
 mods:printMembers()
 
 -- Grab the Twitch authentication key from a file that won't be uploaded to git
@@ -303,6 +297,6 @@ passkey = require "passkey"
 --irc.connect{network = "irc.freenode.net", nick = "doylua"}
 irc.connect{
 	network = "irc.twitch.tv",
-	nick = "lost_r2d2",
+	nick = bot_name,
 	pass = passkey,
 }

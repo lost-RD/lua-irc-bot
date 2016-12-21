@@ -1,11 +1,21 @@
 -- Using this file to reduce clutter in twitch.lua
 irc = require "irc"
 
+-- Print channel members of all connected channels
+local function print_state()
+	for chan in irc.channels() do
+		print(chan..": Channel ops: "..table.concat(chan:ops(), " "))
+		print(chan..": Channel voices: "..table.concat(chan:voices(), " "))
+		print(chan..": Channel normal users: "..table.concat(chan:users(), " "))
+		print(chan..": All channel members: "..table.concat(chan:members(), " "))
+	end
+end
+
 local M = {
 	-- Callback on connect
 	on_connect = function ()
-		print("Joining channel #lost_rd...")
-		irc.join("#lost_rd")
+		print(string.format("Joining channel %s...", broadcaster_channel))
+		irc.join(broadcaster_channel)
 	end,
 	
 	-- Callback on bot join
@@ -17,7 +27,7 @@ local M = {
 			print("  Set by " .. chan.topic.user ..
 				  " at " .. os.date("%c", chan.topic.time))
 		end
-		if chan.name == "#lost_rd" then
+		if chan.name == broadcaster_channel then
 			irc.act(chan.name, "is here, beep boop bzzt")
 		end
 		print_state()
@@ -26,7 +36,7 @@ local M = {
 	-- Callback on user join
 	on_join = function (chan, user)
 		print("I saw a join to " .. chan)
-		if tostring(user) ~= "lost_rd" then
+		if tostring(user) ~= broadcaster_name then
 			irc.say(tostring(chan), "Hi, " .. user)
 		end
 		print_state()
