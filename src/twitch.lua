@@ -94,9 +94,12 @@ end
 -- TODO make this modular
 local function on_channel_msg(chan, from, msg)
 	local admincommands_matchall = {
-		{"trace",       function() irc.trace(trace_cb) end},
+		--trace not implemented
+		--{"trace",       function() irc.trace(trace_cb) end},
+		--[[ not handled by Twitch
 		{"stime",       function() irc.server_time(stime_cb) end},
 		{"sversion",    function() irc.server_version(serverversion_cb) end},
+		]]
 		{"shoo r2d2",   function() irc.part(chan.name) end},
 	}
 	local admincommands = {
@@ -198,6 +201,7 @@ local function on_channel_msg(chan, from, msg)
 	}
 	if msg:sub(1,1) == "!" then
 		local command, arg = string.match(msg, "^!(%w+)%s(.+)")
+		print(string.format("command %s detected with argument %s", command, arg))
 		for k,v in pairs(commands) do
 			if v[1] == command then
 				v[2](s)
