@@ -8,6 +8,8 @@ It's a bit messy for now but I'll clean it up
 local class = require "30log"
 local irc = require "irc"
 local dcc = require "irc.dcc"
+local callbacks = require "callbacks"
+local utils = require "utils"
 
 -- Debug flag
 irc.DEBUG = true
@@ -17,20 +19,6 @@ local ip_prog = io.popen("get_ip")
 local ip = ip_prog:read()
 ip_prog:close()
 irc.set_ip(ip)
-
--- TODO Move this to another file
-function string:split(delimiter)
-  local result = { }
-  local from  = 1
-  local delim_from, delim_to = string.find( self, delimiter, from  )
-  while delim_from do
-    table.insert( result, string.sub( self, from , delim_from-1 ) )
-    from  = delim_to + 1
-    delim_from, delim_to = string.find( self, delimiter, from  )
-  end
-  table.insert( result, string.sub( self, from  ) )
-  return result
-end
 
 -- Print channel members of all connected channels
 local function print_state()
@@ -42,70 +30,20 @@ local function print_state()
 	end
 end
 
--- Callback on connect
-local function on_connect()
-	print("Joining channel #lost_rd...")
-	irc.join("#lost_rd")
-end
-irc.register_callback("connect", on_connect)
-
--- Callback on bot join
-local function on_me_join(chan)
-	print("Join to " .. chan .. " complete.")
-	print(chan .. ": Channel type: " .. chan.chanmode)
-	if chan.topic.text and chan.topic.text ~= "" then
-		print(chan .. ": Channel topic: " .. chan.topic.text)
-		print("  Set by " .. chan.topic.user ..
-			  " at " .. os.date("%c", chan.topic.time))
-	end
-	if chan.name == "#lost_rd" then
-		irc.act(chan.name, "is here, beep boop bzzt")
-	end
-	print_state()
-end
-irc.register_callback("me_join", on_me_join)
-
--- Callback on user join
-local function on_join(chan, user)
-	print("I saw a join to " .. chan)
-	if tostring(user) ~= "lost_rd" then
-		irc.say(tostring(chan), "Hi, " .. user)
-	end
-	print_state()
-end
-irc.register_callback("join", on_join)
-
--- Callback on user part
--- Not sure if useful for Twitch chat
-local function on_part(chan, user, part_msg)
-	print("I saw a part from " .. chan.name .. " saying " .. part_msg)
-	print_state()
-end
-irc.register_callback("part", on_part)
-
--- Callback on nick change
--- Not useful for Twitch chat
-local function on_nick_change(new_nick, old_nick)
-	print("I saw a nick change: "  ..  old_nick .. " -> " .. new_nick)
-	print_state()
-end
-irc.register_callback("nick_change", on_nick_change)
-
--- Callback on kick
--- Not sure if useful for Twitch chat
-local function on_kick(chan, user)
-	print("I saw a kick in " .. chan)
-	print_state()
-end
-irc.register_callback("kick", on_kick)
-
--- Callback on user quit
--- Not sure if useful for Twitch chat
-local function on_quit(chan, user)
-	print("I saw a quit from " .. chan)
-	print_state()
-end
-irc.register_callback("quit", on_quit)
+irc.register_callback("connect", callbacks.on_connect)
+irc.register_callback("me_join", callbacks.on_me_join)
+irc.register_callback("join", callbacks.on_join)
+irc.register_callback("part", callbacks.on_part)
+irc.register_callback("nick_change", callbacks.on_nick_change)
+irc.register_callback("kick", callbacks.on_kick)
+irc.register_callback("quit", callbacks.on_quit)
+irc.register_callback("channel_act", callbacks.on_channel_act)
+irc.register_callback("private_act", callbacks.on_private_act)
+irc.register_callback("op", callbacks.on_op)
+irc.register_callback("deop", callbacks.on_deop)
+irc.register_callback("voice", callbacks.on_voice)
+irc.register_callback("devoice", callbacks.on_devoice)
+irc.register_callback("dcc_send", callbacks.on_dcc_send)
 
 -- WHOIS
 -- Not sure if useful
@@ -317,58 +255,6 @@ local function on_private_msg(from, msg)
 	end
 end
 irc.register_callback("private_msg", on_private_msg)
-
--- Callback on act (/me)?
-local function on_channel_act(chan, from, msg)
-	--irc.act(chan.name, "jumps on " .. from)
-end
-irc.register_callback("channel_act", on_channel_act)
-
--- Callback on private act
--- Doubt useful
-local function on_private_act(from, msg)
-	irc.act(from, "jumps on you")
-end
-irc.register_callback("private_act", on_private_act)
-
--- Callback on op
--- Might be invoked when a user is modded
-local function on_op(chan, from, nick)
-	print(nick .. " was opped in " .. chan .. " by " .. from)
-	print_state()
-end
-irc.register_callback("op", on_op)
-
--- Callback on deop
--- Might be invoked when mod is unmodded
-local function on_deop(chan, from, nick)
-	print(nick .. " was deopped in " .. chan .. " by " .. from)
-	print_state()
-end
-irc.register_callback("deop", on_deop)
-
--- Callback on voice
--- Might be invoked when a user is modded
-local function on_voice(chan, from, nick)
-	print(nick .. " was voiced in " .. chan .. " by " .. from)
-	print_state()
-end
-irc.register_callback("voice", on_voice)
-
--- Callback on devoice
--- Might be invoked when mod is unmodded
-local function on_devoice(chan, from, nick)
-	print(nick .. " was devoiced in " .. chan .. " by " .. from)
-	print_state()
-end
-irc.register_callback("devoice", on_devoice)
-
--- Callback on dcc send
--- Invoked when the bot sends a message?
-local function on_dcc_send()
-	return true
-end
-irc.register_callback("dcc_send", on_dcc_send)
 
 -- Initialise a class for groups such as Moderators, Admins
 -- This will be replaced with calls to database
