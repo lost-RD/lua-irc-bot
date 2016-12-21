@@ -388,6 +388,18 @@ function handlers.on_rpl_yourhost(from, msg)
 end
 -- }}}
 
+-- on_rpl_created {{{
+function handlers.on_rpl_created(from, msg)
+    irc_debug._message("RECV", msg)
+end
+-- }}}
+
+-- on_rpl_myinfo {{{
+function handlers.on_rpl_myinfo(from, msg)
+    irc_debug._message("RECV", msg)
+end
+-- }}}
+
 -- on_rpl_motdstart {{{
 function handlers.on_rpl_motdstart(from)
     serverinfo.motd = ""
