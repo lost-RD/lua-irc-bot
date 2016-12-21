@@ -1,5 +1,6 @@
 ---
 -- Implementation of the main LuaIRC module
+-- Load this module in another file
 
 -- initialization {{{
 local base =      _G
