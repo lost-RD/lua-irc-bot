@@ -2,7 +2,7 @@
 
 M = {}
 
-function tprint(t, indent)
+local function tprint(t, indent)
   function printShit(k, v, indent)
   	--if k == "com" then
   	  print(string.rep(" ",indent)..k," | ",v)
@@ -23,7 +23,7 @@ function tprint(t, indent)
   end
 end
 
-function orderedPairs(t)
+local function orderedPairs(t)
 
     local function orderedNext(t, state)
 
