@@ -123,6 +123,7 @@ local function on_channel_msg(chan, from, msg)
 			end
 		end
 		local command, arg = string.match(msg, "^(%l+)%s(.+)")
+		print(string.format("admin command %s detected with argument %s", command, arg)))
 		if s then
 			for k,v in pairs(admincommands) do
 				if v[1] == command then
@@ -200,6 +201,9 @@ local function on_channel_msg(chan, from, msg)
 		end},
 	}
 	if msg:sub(1,1) == "!" then
+		-- Currently broken
+		-- Only returns command and arg if both are captured
+		-- If only command exists e.g. "!roll" then returns nil, nil
 		local command, arg = string.match(msg, "^!(%w+)%s(.+)")
 		print(string.format("command %s detected with argument %s", command, arg))
 		for k,v in pairs(commands) do
