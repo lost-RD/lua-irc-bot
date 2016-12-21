@@ -93,134 +93,115 @@ end
 -- Callback for every message typed in the channel
 -- TODO make this modular
 local function on_channel_msg(chan, from, msg)
+	local admincommands_matchall = {
+		{"trace",       function() irc.trace(trace_cb) end},
+		{"stime",       function() irc.server_time(stime_cb) end},
+		{"sversion",    function() irc.server_version(serverversion_cb) end},
+		{"shoo r2d2",   function() irc.part(chan.name) end},
+	}
+	local admincommands = {
+		{"op",      function(s) chan:op(s) end},
+		{"deop",    function(s) chan:deop(s) end},
+		{"voice",   function(s) chan:voice(s) end},
+		{"devoice", function(s) chan:devoice(s) end},
+		{"kick",    function(s) chan:kick(s) end},
+		{"send",    function(s) dcc.send(from, s) end},
+		{"whois",   function(s) irc.whois(whois_cb, s) end},
+		{"ping",    function(s) irc.ctcp_ping(ping_cb, s) end},
+		{"time",    function(s) irc.ctcp_time(time_cb, s) end},
+		{"version", function(s) irc.ctcp_version(version_cb, s) end},
+		{"trace",   function(s) irc.trace(trace_cb, s) end},
+	}
 	if from == broadcaster_name then
-		if msg == "shoo l2d2" then
-			irc.part(chan.name)
-			return
-		elseif msg:sub(1, 3) == "op " then
-			chan:op(msg:sub(4))
-			return
-		elseif msg:sub(1, 5) == "deop " then
-			chan:deop(msg:sub(6))
-			return
-		elseif msg:sub(1, 6) == "voice " then
-			chan:voice(msg:sub(7))
-			return
-		elseif msg:sub(1, 8) == "devoice " then
-			chan:devoice(msg:sub(9))
-			return
-		elseif msg:sub(1, 5) == "kick " then
-			chan:kick(msg:sub(6))
-			return
-		elseif msg:sub(1, 5) == "send " then
-			dcc.send(from, msg:sub(6))
-			return
-		elseif msg:sub(1, 6) == "whois " then
-			irc.whois(whois_cb, msg:sub(7))
-			return
-		elseif msg:sub(1, 8) == "sversion" then
-			irc.server_version(serverversion_cb)
-			return
-		elseif msg:sub(1, 5) == "ping " then
-			irc.ctcp_ping(ping_cb, msg:sub(6))
-			return
-		elseif msg:sub(1, 5) == "time " then
-			irc.ctcp_time(time_cb, msg:sub(6))
-			return
-		elseif msg:sub(1, 8) == "version " then
-			irc.ctcp_version(version_cb, msg:sub(9))
-			return
-		elseif msg:sub(1, 5) == "stime" then
-			irc.server_time(stime_cb)
-			return
-		elseif msg:sub(1, 6) == "trace " then
-			irc.trace(trace_cb, msg:sub(7))
-			return
-		elseif msg:sub(1, 5) == "trace" then
-			irc.trace(trace_cb)
-			return
+		for k,v in pairs(admincommands_matchall) do
+			if v[1] == msg then
+				v[2]()
+				return
+			end
+		end
+		local command, arg = string.match(msg, "^(%l+)%s(.+)")
+		if s then
+			for k,v in pairs(admincommands) do
+				if v[1] == command then
+					v[2](s)
+					return
+				end
+			end
 		end
 	end
-
-	if msg:sub(1, 11) == "hello l2d2!" then
+	if msg == "hello l2d2!" then
 		irc.say(chan.name, "hello "..from.."!")
 		return
 	end
-
-	if msg:sub(1,1) == "!" then
-		print("command detected")
-		local _, i = msg:find("![a-z0-9]+")
-		local cmd, arg = msg:sub(2,i), msg:sub(i+1)
-		local i, j = arg:find("[a-z0-9/]+")
-		if i and j then
-			print(i,j)
-			arg = string.sub(arg, i)
-		else
-			arg = nil
-		end
-		print(cmd, arg)
-		if cmd == "mod" then
-			print("mod command detected")
+	local commands = {
+		{"mod", function(s)
 			if admins:isMember(from) then
-				if mods:isMember(arg) then
-					irc.say(chan.name, arg.." is already a mod!")
+				if mods:isMember(s) then
+					irc.say(chan.name, s.." is already a mod!")
 				else
-					mods:addMember(arg)
-					if mods:isMember(arg) then
-						irc.say(chan.name, arg.." is now a mod!")
+					mods:addMember(s)
+					if mods:isMember(s) then
+						irc.say(chan.name, s.." is now a mod!")
 					end
 				end
 			else
 				print(from.."is not an admin")
 			end
-		end
-		if cmd == "unmod" then
-			print("unmod command detected")
+		end},
+		{"unmod", function(s)
 			if admins:isMember(from) then
-				if not mods:isMember(arg) then
-					irc.say(chan.name, arg.." is not a mod.")
+				if not mods:isMember(s) then
+					irc.say(chan.name, s.." is not a mod.")
 				else
-					if not admins:isMember(arg) then
-						mods:removeMember(arg)
-						if not mods:isMember(arg) then
-							irc.say(chan.name, arg.." is no longer a mod.")
+					if not admins:isMember(s) then
+						mods:removeMember(s)
+						if not mods:isMember(s) then
+							irc.say(chan.name, s.." is no longer a mod.")
 						end
 					else
-						irc.say(chan.name, arg.." is an admin and cannot be unmodded.")
+						irc.say(chan.name, s.." is an admin and cannot be unmodded.")
 					end
 				end
 			else
 				print(from.."is not an admin")
 			end
-		end
-		if cmd == "l2d2" then
-			print("mod command detected")
+		end},
+		{"l2d2", function(s)
 			if admins:isMember(from) then
-				irc.say(chan.name, arg)
+				irc.say(chan.name, s)
 			else
 				print(from.."is not an admin")
 			end
-		end
-		if cmd == "roll" then
-			if type(tonumber(arg)) == "number" then
-				arg = tonumber(arg)
-				if (arg > 1) and (arg%1==0) then
-					local n = math.random(1,arg)
+		end},
+		{"roll", function(s)
+			if type(tonumber(s)) == "number" then
+				s = tonumber(s)
+				if (s > 1) and (s%1==0) then
+					local n = math.random(1,s)
 					irc.say(chan.name, tostring(n))
 				end
 			end
-		end
-		if cmd == "peeps" then
+		end},
+		{"peeps", function()
 			if mods:isMember(from) then
 				irc.say(chan.name, table.concat(chan:members(), ", "))
 			end
-		end
-		if cmd == "maxmeme" then
+		end},
+		{"maxmeme", function()
 			if from == broadcaster_name then
 				irc.say(chan.name, "MAXIMUM")
 				irc.say(chan.name, "E")
 				irc.say(chan.name, "M")
 				irc.say(chan.name, "E")
+			end
+		end},
+	}
+	if msg:sub(1,1) == "!" then
+		local command, arg = string.match(msg, "^!(%w+)%s(.+)")
+		for k,v in pairs(commands) do
+			if v[1] == command then
+				v[2](s)
+				return
 			end
 		end
 	end
@@ -232,7 +213,7 @@ irc.register_callback("channel_msg", on_channel_msg)
 local function on_private_msg(from, msg)
 	if from == broadcaster_name then
 		if msg == "leave" then
-			irc.quit("gone")
+			irc.quit("asked nicely to leave by "..broadcaster_name)
 			return
 		elseif msg:sub(1, 5) == "send " then
 			dcc.send(from, msg:sub(6))
@@ -253,6 +234,7 @@ irc.register_callback("private_msg", on_private_msg)
 -- Initialise a class for groups such as Moderators, Admins
 -- This will be replaced with calls to database
 Group = class("Group")
+
 function Group:init(name, tMembers)
 	if tMembers then
 		self.members = {}
@@ -262,12 +244,14 @@ function Group:init(name, tMembers)
 	end
 	self.label = name
 end
+
 function Group:printMembers()
 	print(self.label..":")
 	for k,v in pairs(self.members) do
-		print(k)
+		print("  "..k)
 	end
 end
+
 function Group:isMember(username)
 	if self.members[username] then
 		print(username.." is a member of "..self.label)
@@ -276,9 +260,11 @@ function Group:isMember(username)
 	print(username.." is not a member of "..self.label)
 	return false
 end
+
 function Group:addMember(username)
 	self.members[username] = true
 end
+
 function Group:removeMember(username)
 	self.members[username] = nil
 end
@@ -287,6 +273,7 @@ end
 -- This will be replaced with database calls
 admins = Group:new("admins", {broadcaster_name})
 admins:printMembers()
+
 mods = Group:new("mods", {broadcaster_name, bot_name})
 mods:printMembers()
 
